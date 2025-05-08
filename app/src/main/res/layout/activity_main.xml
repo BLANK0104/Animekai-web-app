@@ -1,18 +1,83 @@
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView
+    xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    tools:context=".MainActivity">
+    android:background="@null">
 
-    <WebView
-        android:id="@+id/webView"
+    <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent" />
+        android:layout_height="wrap_content"
+        android:orientation="vertical">
 
-    <FrameLayout
-        android:id="@+id/customViewContainer"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:visibility="gone" />
-</androidx.constraintlayout.widget.ConstraintLayout>
+        <!-- Navigation Icons -->
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:padding="8dp"
+            android:gravity="center">
+
+            <ImageButton
+                android:id="@+id/btnContinueWatching"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@null"
+                android:contentDescription="Continue Watching"
+                android:src="@drawable/ic_baseline_watch_later_24"
+                app:tint="@color/black"
+                android:padding="8dp" />
+
+            <ImageButton
+                android:id="@+id/btnProfile"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@null"
+                android:contentDescription="Profile"
+                android:src="@drawable/ic_baseline_person_24"
+                app:tint="@color/black"
+                android:padding="8dp" />
+
+            <ImageButton
+                android:id="@+id/btnBookmarks"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@null"
+                android:contentDescription="Bookmarks"
+                android:src="@drawable/ic_baseline_bookmark_24"
+                app:tint="@color/black"
+                android:padding="8dp" />
+
+            <ImageButton
+                android:id="@+id/btnSettings"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:background="@null"
+                android:contentDescription="Settings"
+                android:src="@drawable/ic_baseline_settings_24"
+                app:tint="@color/black"
+                android:padding="8dp" />
+        </LinearLayout>
+
+        <!-- WebView -->
+        <FrameLayout
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <WebView
+                android:id="@+id/webView"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent" />
+
+            <FrameLayout
+                android:id="@+id/customViewContainer"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:visibility="gone" />
+        </FrameLayout>
+    </LinearLayout>
+</ScrollView>

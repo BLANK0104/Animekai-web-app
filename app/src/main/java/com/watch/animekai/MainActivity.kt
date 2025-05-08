@@ -12,6 +12,7 @@ import android.os.Looper
 import android.view.MotionEvent
 import android.view.View
 import android.webkit.*
+import android.widget.ImageButton
 import android.widget.EditText
 import android.widget.FrameLayout
 import android.widget.Toast
@@ -23,7 +24,6 @@ class MainActivity : AppCompatActivity() {
     private var customViewContainer: FrameLayout? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
     private val handler = Handler(Looper.getMainLooper())
-    private var isNetworkAvailable = true
     private val defaultUrl = "https://animekai.to/"
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -95,6 +95,20 @@ class MainActivity : AppCompatActivity() {
         val savedUrl = sharedPreferences.getString("webViewUrl", defaultUrl)
         webView.loadUrl(savedUrl ?: defaultUrl)
 
+        // Set up navigation buttons
+        findViewById<ImageButton>(R.id.btnContinueWatching).setOnClickListener {
+            webView.loadUrl("https://animekai.to/user/watching")
+        }
+        findViewById<ImageButton>(R.id.btnProfile).setOnClickListener {
+            webView.loadUrl("https://animekai.to/user/profile")
+        }
+        findViewById<ImageButton>(R.id.btnBookmarks).setOnClickListener {
+            webView.loadUrl("https://animekai.to/user/bookmarks")
+        }
+        findViewById<ImageButton>(R.id.btnSettings).setOnClickListener {
+            webView.loadUrl("https://animekai.to/user/settings")
+        }
+
         // Long press for 5 seconds to change URL
         webView.setOnTouchListener(object : View.OnTouchListener {
             private val longPressHandler = Handler(Looper.getMainLooper())
@@ -118,9 +132,6 @@ class MainActivity : AppCompatActivity() {
                 return false
             }
         })
-
-        // Start checking for network availability
-        checkNetworkFor5Seconds()
     }
 
     private fun showChangeUrlDialog(sharedPreferences: android.content.SharedPreferences, webView: WebView) {
@@ -142,24 +153,6 @@ class MainActivity : AppCompatActivity() {
             .setNegativeButton("Cancel", null)
             .create()
         dialog.show()
-    }
-
-    private fun checkNetworkFor5Seconds() {
-        handler.postDelayed({
-            if (!isNetworkConnected()) {
-                isNetworkAvailable = false
-                showNoNetworkScreen()
-            }
-        }, 5000) // 5 seconds
-    }
-
-    private fun isNetworkConnected(): Boolean {
-        val connectivityManager =
-            getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val network = connectivityManager.activeNetwork ?: return false
-        val capabilities =
-            connectivityManager.getNetworkCapabilities(network) ?: return false
-        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
     }
 
     private fun showNoNetworkScreen() {
