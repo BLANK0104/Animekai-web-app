@@ -5,14 +5,17 @@ import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
+import android.net.http.SslError
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
+import android.view.MotionEvent
 import android.view.View
-import android.net.http.SslError
-import android.view.WindowManager
 import android.webkit.*
+import android.widget.EditText
 import android.widget.FrameLayout
+import android.widget.Toast
+import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
@@ -21,6 +24,7 @@ class MainActivity : AppCompatActivity() {
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
     private val handler = Handler(Looper.getMainLooper())
     private var isNetworkAvailable = true
+    private val defaultUrl = "https://animekai.to/"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -41,7 +45,6 @@ class MainActivity : AppCompatActivity() {
                 handler: SslErrorHandler?,
                 error: SslError?
             ) {
-                // SSL error detected, show "No Network Available" screen
                 handler?.cancel()
                 showNoNetworkScreen()
             }
@@ -51,7 +54,6 @@ class MainActivity : AppCompatActivity() {
                 request: WebResourceRequest?,
                 error: WebResourceError?
             ) {
-                // General WebView error detected, show "No Network Available" screen
                 if (request?.isForMainFrame == true) {
                     showNoNetworkScreen()
                 }
@@ -60,17 +62,12 @@ class MainActivity : AppCompatActivity() {
 
         webView.webChromeClient = object : WebChromeClient() {
             override fun onShowCustomView(view: View, callback: CustomViewCallback) {
-                // Enter full-screen mode
                 customView = view
                 customViewContainer?.visibility = View.VISIBLE
                 customViewContainer?.addView(view)
                 customViewCallback = callback
                 webView.visibility = View.GONE
-
-                // Set screen orientation to landscape
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
-
-                // Hide system UI for full-screen experience
                 window.decorView.systemUiVisibility = (
                         View.SYSTEM_UI_FLAG_FULLSCREEN
                                 or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
@@ -79,17 +76,12 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onHideCustomView() {
-                // Exit full-screen mode
                 customViewContainer?.visibility = View.GONE
                 customViewContainer?.removeView(customView)
                 customView = null
                 customViewCallback = null
                 webView.visibility = View.VISIBLE
-
-                // Reset screen orientation to default
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
-
-                // Restore system UI
                 window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
             }
         }
@@ -98,20 +90,67 @@ class MainActivity : AppCompatActivity() {
         webSettings.javaScriptEnabled = true
         webSettings.domStorageEnabled = true
 
-        // Load the website
-        webView.loadUrl("https://animekai.to/")
+        // Load the saved URL or default URL
+        val sharedPreferences = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        val savedUrl = sharedPreferences.getString("webViewUrl", defaultUrl)
+        webView.loadUrl(savedUrl ?: defaultUrl)
+
+        // Long press for 5 seconds to change URL
+        webView.setOnTouchListener(object : View.OnTouchListener {
+            private val longPressHandler = Handler(Looper.getMainLooper())
+            private var isLongPress = false
+
+            override fun onTouch(v: View?, event: MotionEvent?): Boolean {
+                when (event?.action) {
+                    MotionEvent.ACTION_DOWN -> {
+                        isLongPress = true
+                        longPressHandler.postDelayed({
+                            if (isLongPress) {
+                                showChangeUrlDialog(sharedPreferences, webView)
+                            }
+                        }, 5000) // 5 seconds
+                    }
+                    MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
+                        isLongPress = false
+                        longPressHandler.removeCallbacksAndMessages(null)
+                    }
+                }
+                return false
+            }
+        })
 
         // Start checking for network availability
-        checkNetworkFor10Seconds()
+        checkNetworkFor5Seconds()
     }
 
-    private fun checkNetworkFor10Seconds() {
+    private fun showChangeUrlDialog(sharedPreferences: android.content.SharedPreferences, webView: WebView) {
+        val editText = EditText(this)
+        editText.hint = "Enter new URL"
+        val dialog = AlertDialog.Builder(this)
+            .setTitle("Change URL")
+            .setView(editText)
+            .setPositiveButton("Save") { _, _ ->
+                val newUrl = editText.text.toString()
+                if (newUrl.isNotBlank()) {
+                    sharedPreferences.edit().putString("webViewUrl", newUrl).apply()
+                    webView.loadUrl(newUrl) // Reload the WebView with the new URL
+                    Toast.makeText(this, "URL updated", Toast.LENGTH_SHORT).show()
+                } else {
+                    Toast.makeText(this, "Invalid URL", Toast.LENGTH_SHORT).show()
+                }
+            }
+            .setNegativeButton("Cancel", null)
+            .create()
+        dialog.show()
+    }
+
+    private fun checkNetworkFor5Seconds() {
         handler.postDelayed({
             if (!isNetworkConnected()) {
                 isNetworkAvailable = false
                 showNoNetworkScreen()
             }
-        }, 10000) // 10 seconds
+        }, 5000) // 5 seconds
     }
 
     private fun isNetworkConnected(): Boolean {
@@ -130,11 +169,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onBackPressed() {
+        val webView: WebView = findViewById(R.id.webView)
         if (customView != null) {
-            // Exit full-screen mode if active
             customViewCallback?.onCustomViewHidden()
+        } else if (webView.canGoBack()) {
+            webView.goBack() // Navigate back in WebView history
         } else {
-            super.onBackPressed()
+            super.onBackPressed() // Exit the app
         }
     }
 }
