@@ -1,21 +1,26 @@
 package com.watch.animekai
 
+import android.content.Context
+import android.content.Intent
 import android.content.pm.ActivityInfo
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.View
+import android.net.http.SslError
 import android.view.WindowManager
+import android.webkit.*
 import android.widget.FrameLayout
-import android.webkit.CookieManager
-import android.webkit.WebChromeClient
-import android.webkit.WebSettings
-import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.appcompat.app.AppCompatActivity
 
 class MainActivity : AppCompatActivity() {
     private var customView: View? = null
     private var customViewContainer: FrameLayout? = null
     private var customViewCallback: WebChromeClient.CustomViewCallback? = null
+    private val handler = Handler(Looper.getMainLooper())
+    private var isNetworkAvailable = true
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -30,7 +35,29 @@ class MainActivity : AppCompatActivity() {
         cookieManager.setAcceptThirdPartyCookies(webView, true)
 
         // Configure WebView
-        webView.webViewClient = WebViewClient()
+        webView.webViewClient = object : WebViewClient() {
+            override fun onReceivedSslError(
+                view: WebView?,
+                handler: SslErrorHandler?,
+                error: SslError?
+            ) {
+                // SSL error detected, show "No Network Available" screen
+                handler?.cancel()
+                showNoNetworkScreen()
+            }
+
+            override fun onReceivedError(
+                view: WebView?,
+                request: WebResourceRequest?,
+                error: WebResourceError?
+            ) {
+                // General WebView error detected, show "No Network Available" screen
+                if (request?.isForMainFrame == true) {
+                    showNoNetworkScreen()
+                }
+            }
+        }
+
         webView.webChromeClient = object : WebChromeClient() {
             override fun onShowCustomView(view: View, callback: CustomViewCallback) {
                 // Enter full-screen mode
@@ -73,6 +100,33 @@ class MainActivity : AppCompatActivity() {
 
         // Load the website
         webView.loadUrl("https://animekai.to/")
+
+        // Start checking for network availability
+        checkNetworkFor10Seconds()
+    }
+
+    private fun checkNetworkFor10Seconds() {
+        handler.postDelayed({
+            if (!isNetworkConnected()) {
+                isNetworkAvailable = false
+                showNoNetworkScreen()
+            }
+        }, 10000) // 10 seconds
+    }
+
+    private fun isNetworkConnected(): Boolean {
+        val connectivityManager =
+            getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities =
+            connectivityManager.getNetworkCapabilities(network) ?: return false
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET)
+    }
+
+    private fun showNoNetworkScreen() {
+        val intent = Intent(this, NoNetworkActivity::class.java)
+        startActivity(intent)
+        finish()
     }
 
     override fun onBackPressed() {
