@@ -3,7 +3,6 @@ package com.watch.animekai
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ActivityInfo
-import android.net.http.SslError
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
@@ -47,7 +46,7 @@ class MainActivity : AppCompatActivity() {
             override fun onPageFinished(view: WebView?, url: String?) {
                 super.onPageFinished(view, url)
                 Log.d(TAG, "Page finished loading: $url")
-                saveCookies() // Save cookies after page load
+                saveCookies()
             }
         }
 
@@ -81,8 +80,8 @@ class MainActivity : AppCompatActivity() {
 
         val webSettings: WebSettings = webView.settings
         webSettings.javaScriptEnabled = true
-        webSettings.domStorageEnabled = true // Enable DOM storage
-        webSettings.saveFormData = true // Save form data
+        webSettings.domStorageEnabled = true
+        webSettings.saveFormData = true
         Log.d(TAG, "WebView settings configured")
 
         // Load the saved URL or default URL
@@ -105,7 +104,7 @@ class MainActivity : AppCompatActivity() {
                                 Log.d(TAG, "Long press detected, showing URL change dialog")
                                 showChangeUrlDialog(sharedPreferences, webView)
                             }
-                        }, 5000) // 5 seconds
+                        }, 5000)
                     }
                     MotionEvent.ACTION_UP, MotionEvent.ACTION_CANCEL -> {
                         isLongPress = false
@@ -124,7 +123,7 @@ class MainActivity : AppCompatActivity() {
             Log.d(TAG, "Saving cookies: $cookies")
             val sharedPreferences = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
             sharedPreferences.edit().putString(cookieKey, cookies).apply()
-            cookieManager.flush() // Ensure cookies are saved to persistent storage
+            cookieManager.flush()
         } else {
             Log.d(TAG, "No cookies to save")
         }
@@ -136,7 +135,7 @@ class MainActivity : AppCompatActivity() {
         if (cookies != null) {
             val cookieManager = CookieManager.getInstance()
             cookieManager.setCookie(defaultUrl, cookies)
-            cookieManager.flush() // Ensure cookies are applied
+            cookieManager.flush()
             Log.d(TAG, "Restored cookies: $cookies")
         } else {
             Log.d(TAG, "No cookies found to restore")
@@ -153,7 +152,7 @@ class MainActivity : AppCompatActivity() {
                 val newUrl = editText.text.toString()
                 if (newUrl.isNotBlank()) {
                     sharedPreferences.edit().putString("webViewUrl", newUrl).apply()
-                    webView.loadUrl(newUrl) // Reload the WebView with the new URL
+                    webView.loadUrl(newUrl)
                     Log.d(TAG, "URL updated to: $newUrl")
                     Toast.makeText(this, "URL updated", Toast.LENGTH_SHORT).show()
                 } else {
@@ -166,13 +165,6 @@ class MainActivity : AppCompatActivity() {
         dialog.show()
     }
 
-    private fun showNoNetworkScreen() {
-        Log.d(TAG, "No network detected, showing no network screen")
-        val intent = Intent(this, NoNetworkActivity::class.java)
-        startActivity(intent)
-        finish()
-    }
-
     override fun onBackPressed() {
         val webView: WebView = findViewById(R.id.webView)
         if (customView != null) {
@@ -180,10 +172,10 @@ class MainActivity : AppCompatActivity() {
             customViewCallback?.onCustomViewHidden()
         } else if (webView.canGoBack()) {
             Log.d(TAG, "Navigating back in WebView history")
-            webView.goBack() // Navigate back in WebView history
+            webView.goBack()
         } else {
             Log.d(TAG, "Exiting app via back press")
-            super.onBackPressed() // Exit the app
+            super.onBackPressed()
         }
     }
 }
