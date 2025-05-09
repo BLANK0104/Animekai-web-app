@@ -1,7 +1,6 @@
 package com.watch.animekai
 
 import android.content.Context
-import android.content.Intent
 import android.content.pm.ActivityInfo
 import android.os.Bundle
 import android.os.Handler
@@ -58,7 +57,9 @@ class MainActivity : AppCompatActivity() {
                 customViewContainer?.addView(view)
                 customViewCallback = callback
                 webView.visibility = View.GONE
-                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE
+
+                // Allow free rotation in fullscreen mode
+                requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_SENSOR
                 window.decorView.systemUiVisibility = (
                         View.SYSTEM_UI_FLAG_FULLSCREEN
                                 or View.SYSTEM_UI_FLAG_HIDE_NAVIGATION
@@ -73,6 +74,8 @@ class MainActivity : AppCompatActivity() {
                 customView = null
                 customViewCallback = null
                 webView.visibility = View.VISIBLE
+
+                // Reset to default orientation
                 requestedOrientation = ActivityInfo.SCREEN_ORIENTATION_UNSPECIFIED
                 window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_VISIBLE
             }
